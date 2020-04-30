@@ -1,10 +1,11 @@
 # NERO - The WEB Phishing Tool
+![Optional Text](../master/images/alt1.png)
 
 NERO is an Simple but powerfull fishing tool, build in python with python payloads.
 The main purpose of NERO, is to simplify the WEB attack vectors during the pentest. Also, it comes with is 
 own modules to automate WEB Based Pentest, such as Social Engineering, Scanning, and Footprint.
 
-## Feautures
+## Features
 
 * Quick and easy to use
 * Performs ARP Poisoning
