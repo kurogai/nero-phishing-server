@@ -1,4 +1,4 @@
-# NERO - The WEB Phishing Tool
+# NERO - The WEB Phishing Tool [Alpha]
 ![Optional Text](../master/images/alt1.png)
 
 NERO is an Simple but powerfull fishing tool, build in python with python payloads.
@@ -14,7 +14,7 @@ own modules to automate WEB Based Pentest, such as Social Engineering, Scanning,
 * Quick integrated port scanning tool
 * Hability to create a full costumized server
 * Can bypass full static pages (enable module "Costum page")
-* Note: this is the alpha version
+* Note: this is the alpha version, errors may appear. If so, please report.
 
 ## Requirements
 
