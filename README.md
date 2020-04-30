@@ -14,6 +14,7 @@ own modules to automate WEB Based Pentest, such as Social Engineering, Scanning,
 * Quick integrated port scanning tool
 * Hability to create a full costumized server
 * Can bypass full static pages (enable module "Costum page")
+* Note: this is the alpha version
 
 ## Requirements
 
