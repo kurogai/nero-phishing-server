@@ -16,6 +16,26 @@ own modules to automate WEB Based Pentest, such as Social Engineering, Scanning,
 * Can bypass full static pages (enable module "Costum page")
 * Note: this is the alpha version, errors may appear. If so, please report.
 
+## Basic use
+
+The default use for NERO, is:
+```set ip [adress]
+   set port [adress]
+   set url [complete url]
+   run
+```
+You can ative modules for better fingerprint:
+```
+  set module [id]
+  example
+  set module 4
+```
+If you turn on "Costumized", the url option turn unavaliable, and you can run an costumized server, with html/index.html as default file
+
+## Notes for Alpha
+
+The alpha version, comes with an complete server to use, but some erros may occour while setting up an costumized server and SSL verification. If you find one of then, please report :) .
+
 ## Requirements
 
 * Python 3
