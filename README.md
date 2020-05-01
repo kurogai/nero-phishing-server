@@ -19,7 +19,8 @@ own modules to automate WEB Based Pentest, such as Social Engineering, Scanning,
 ## Basic use
 
 The default use for NERO, is:
-```set ip [adress]
+```
+   set ip [adress]
    set port [adress]
    set url [complete url]
    run
@@ -31,6 +32,16 @@ You can ative modules for better fingerprint:
   set module 4
 ```
 If you turn on "Costumized", the url option turn unavaliable, and you can run an costumized server, with html/index.html as default file
+
+Displaying help
+```
+  help
+```
+
+Displaying all current modules
+```
+  list
+```
 
 ## Notes for Alpha
 
