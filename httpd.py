@@ -102,16 +102,10 @@ def recursive_downloader(target_url):
             new_dir = './wdata/'+i.replace("https://","")
             new_dir = './wdata/'+i.replace("http://","")
             
-            if i.startswith("https://") or i.startswith("http://"):
-                request = urllib.request.Request(i+'.css',headers={
-                "User-Agent":default_agent,
-                "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
-                })
-            else:
-                request = urllib.request.Request(scrapper_url+i+'.css',headers={
-                "User-Agent":default_agent,
-                "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
-                })
+            request = urllib.request.Request(scrapper_url+i+'.css',headers={
+            "User-Agent":default_agent,
+            "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+            })
             
             print("[+] {} -> {}".format(counter,i+'.css'))
             counter = counter + 1
@@ -185,7 +179,7 @@ def recursive_downloader(target_url):
                     print("[+] Alternative download worked")
                     
                 except:
-                    print("[!] Cannot download (if starts with https:// or http:// dont worry)")                
+                    print("[!] Cannot download and modify {}".format(i))                
         
         counter = 1
     else:
@@ -300,7 +294,7 @@ def recursive_downloader(target_url):
                 temp.write(html)
                 temp.close()
             except:
-                print("[!] Cannot download (if starts with https:// or http:// dont worry)")     
+                print("[!] Cannot download and modify {}".format(i))
         
         counter = 1
     else:
@@ -333,7 +327,6 @@ def download_url(url):
     try:
         target = urllib.request.urlopen(request,timeout=60)
         html = target.read()
-        html = re.sub('action="[\'"]?([^\'">]+)','action="{}"'.format(url),html)
     except ConnectionResetError:
         print("[!] Remote host blocked our connection")
         print("[+] Trying to bypass with User-Agent rotation...")
@@ -346,7 +339,6 @@ def download_url(url):
             try:
                 target = urllib.request.urlopen(request,timeout=60)
                 html = target.read()
-                html = re.sub('action="[\'"]?([^\'">]+)','action="{}"'.format(url),html)
                 print("[+] Sucefully bypassed")
                 break
             except ConnectionResetError:
