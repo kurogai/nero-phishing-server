@@ -6,7 +6,18 @@
 
 Nero is an short but powerfull server to generate fake pages for phishing, doesn't come with pre-made webpages, Nero can retreive recursively and generate the SAME page and parse it quickly! Also, supports tunneling with Serveo, Ngrok and Tinyurl.
 
-Some Screenshots from the viewport:
+# About bugs while grabbing passwords
+
+Some domains may block the request because the Same Origin Policy is turned on. So, to bypass it, you need to set alternative urls for the current domain.
+Examples:
+
+https://somedomain.com/ 
+
+to others alternatives: 
+
+https://somedomain.com/login
+https://web.somedomain.com/
+...
 
 ## Advice
 
