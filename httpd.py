@@ -308,7 +308,7 @@ def recursive_downloader(target_url):
     #a = open("./index.html","w")
     
     with open('./index.html','wb') as a:
-        new_f = re.sub(r'action="[\'"]?([^\'">]+)"',"action='#'",new_f)
+        new_f = re.sub(r'action="[\'"]?([^\'">]+)"',target_url,new_f)
         a.write(new_f.encode())
         
     print("[+] Finished recursive download, starting server")
