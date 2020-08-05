@@ -1,4 +1,4 @@
-# NERO - Fishing Anywere!
+# NERO - Fishing Anywere like a ninja!
 
 <p align="center"> 
     <img src="/images/main.png">
