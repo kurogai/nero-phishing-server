@@ -14,8 +14,8 @@ Usage of NERO for attacking targets without prior mutual consent is illegal. It'
 
 ## LICENSE
 
+NERO was made under GNU license. See license file for more.
+
 ## Insues
 
 If you found an insue, please let me know!
-
-NERO was made under GNU license. See license file for more.
