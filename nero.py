@@ -122,20 +122,17 @@ def main():
                 os.system("clear")
 
             if command[0] == "run":
-                if status[4] == True:
-                    T_URL = "None"
-                    
-                try:
-                    if LPORT != 0:
-                        pass
-                except:
-                    print("[!] No port configured, using 8080")
-                    LPORT = 8080
-
-                try:
-                    httpd.run(LHOST,LPORT,status,T_URL,_dns)
-                except:
-                    print("\033[1;31m[!] Please review your settings!\033[m")
+                if T_URL == "":
+                    print("[!] No URL provided!")
+                elif T_URL != "":
+                    try:
+                        if LPORT != 0:
+                            pass
+                    except:
+                        print("[!] No port configured, using 8080")
+                        LPORT = 8080
+                        
+                    httpd.run(LHOST,LPORT,T_URL)
 
             if command[0] == "exit" or command[0] == "close" or command[0] == "bye":
                 print("[*] Quiting...")
