@@ -28,6 +28,10 @@ https://somedomain.com/login
 https://web.somedomain.com/
 ...
 
+## Contribute
+
+Anyone can be part of the nero project, feel free to contribute to the branch "development".
+
 ## Advice
 
 Usage of NERO for attacking targets without prior mutual consent is illegal. It's the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program. Only use for educational purposes.
